@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProjectRequest extends FormRequest
 {
@@ -11,18 +13,23 @@ class UpdateProjectRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
+
         return [
-            //
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'image' => ['nullable', 'image'],
+            'due_date' => ['nullable', 'date'],
+            'status' => ['required', 'string', Rule::in(['pending', 'in_progress', 'completed'])],
         ];
     }
 }
