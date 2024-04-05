@@ -5,26 +5,28 @@ namespace App\Http\Controllers;
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request): Response|ResponseFactory
     {
-        $user = Auth::user();
-        $totalPendingTasks = Task::query()->where('status', 'pending')->count();
-        $myPendingTasks = Task::query()->where('status', 'pending')->where('assigned_user_id', $user->id)->count();
+        $user = $request->user();
 
-        $totalInProgressTasks = Task::query()->where('status', 'in_progress')->count();
-        $myInProgressTasks = Task::query()->where('status', 'in_progress')->where('assigned_user_id', $user->id)->count();
+        $totalPendingTasks = Task::pending()->count();
+        $myPendingTasks = Task::pending()->assignedTo($user)->count();
 
-        $totalCompletedTasks = Task::query()->where('status', 'completed')->count();
-        $myCompletedTasks = Task::query()->where('status', 'completed')->where('assigned_user_id', $user->id)->count();
+        $totalInProgressTasks = Task::inProgress()->count();
+        $myInProgressTasks = Task::inProgress()->assignedTo($user)->count();
 
-        $activeTasks = Task::query()->whereIn('status', ['pending', 'in_progress'])->
-        where('assigned_user_id', $user->id)->orderBy('due_date')
+        $totalCompletedTasks = Task::completed()->count();
+        $myCompletedTasks = Task::completed()->assignedTo($user)->count();
+
+        $activeTasks = Task::active()->assignedTo($user)->orderBy('due_date')
             ->limit(10)->get();
         $activeTasks = TaskResource::collection($activeTasks);
+
         return inertia('Dashboard', compact('totalPendingTasks', 'myPendingTasks', 'totalInProgressTasks', 'myInProgressTasks', 'totalCompletedTasks', 'myCompletedTasks', 'activeTasks'));
     }
 }
