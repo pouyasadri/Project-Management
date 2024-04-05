@@ -10,30 +10,35 @@ use App\Http\Resources\UserResource;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class TaskController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * @param Request $request
+     * @return Response|ResponseFactory
      */
-    public function index()
+    public function index(Request $request): Response|ResponseFactory
     {
-        $query = Task::query();
+        // Get the query parameters for sorting and filtering
+        $sortField = $request->input('sort_field', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
 
-        $sortField = request('sort_field', 'created_at');
-        $sortOrder = request('sort_order', 'desc');
+        // Use the query parameters in the Task model query
+        $tasks = Task::query()
+            ->when($request->input('name'), fn($query, $name) => $query->where('name', 'like', '%' . $name . '%'))
+            ->when($request->input('status'), fn($query, $status) => $query->where('status', $status))
+            ->orderBy($sortField, $sortOrder)
+            ->paginate(10)
+            ->onEachSide(1);
 
-        if (request('name')) {
-            $query->where('name', 'like', '%' . request('name') . '%');
-        }
-
-        if (request('status')) {
-            $query->where('status', request('status'));
-        }
-
-        $tasks = $query->orderBy($sortField, $sortOrder)->paginate(10)->onEachSide(1);
+        // Return the Inertia response with the tasks data
         return inertia('Task/Index', [
             'tasks' => TaskResource::collection($tasks),
             'queryParams' => request()->query() ?: null,
@@ -43,8 +48,9 @@ class TaskController extends Controller
 
     /**
      * Show the form for creating a new resource.
+     * @return Response|ResponseFactory
      */
-    public function create()
+    public function create(): Response|ResponseFactory
     {
         $projects = Project::query()->orderBy('name')->get();
         $users = User::query()->orderBy('name')->get();
@@ -56,8 +62,10 @@ class TaskController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     * @param StoreTaskRequest $request
+     * @return RedirectResponse
      */
-    public function store(StoreTaskRequest $request)
+    public function store(StoreTaskRequest $request): RedirectResponse
     {
         $data = $request->validated();
         $image = $data['image'] ?? null;
@@ -73,8 +81,10 @@ class TaskController extends Controller
 
     /**
      * Display the specified resource.
+     * @param Task $task
+     * @return Response|ResponseFactory
      */
-    public function show(Task $task)
+    public function show(Task $task): Response|ResponseFactory
     {
         return inertia('Task/Show', [
             'task' => new TaskResource($task),
@@ -83,8 +93,10 @@ class TaskController extends Controller
 
     /**
      * Show the form for editing the specified resource.
+     * @param Task $task
+     * @return Response|ResponseFactory
      */
-    public function edit(Task $task)
+    public function edit(Task $task): Response|ResponseFactory
     {
         $projects = Project::query()->orderBy('name')->get();
         $users = User::query()->orderBy('name')->get();
@@ -97,8 +109,11 @@ class TaskController extends Controller
 
     /**
      * Update the specified resource in storage.
+     * @param UpdateTaskRequest $request
+     * @param Task $task
+     * @return RedirectResponse
      */
-    public function update(UpdateTaskRequest $request, Task $task)
+    public function update(UpdateTaskRequest $request, Task $task): RedirectResponse
     {
         $data = $request->validated();
         $image = $data['image'] ?? null;
@@ -115,8 +130,10 @@ class TaskController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     * @param Task $task
+     * @return RedirectResponse
      */
-    public function destroy(Task $task)
+    public function destroy(Task $task): RedirectResponse
     {
         $name = $task->name;
         $task->delete();
