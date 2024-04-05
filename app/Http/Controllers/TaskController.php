@@ -41,7 +41,7 @@ class TaskController extends Controller
         // Return the Inertia response with the tasks data
         return inertia('Task/Index', [
             'tasks' => TaskResource::collection($tasks),
-            'queryParams' => request()->query() ?: null,
+            'queryParams' => $request->query() ?: null,
             'success' => session('success') ?? '',
         ]);
     }
@@ -143,26 +143,32 @@ class TaskController extends Controller
         return to_route('tasks.index')->with('success', "Task \"$name\" deleted successfully.");
     }
 
-    public function myTasks()
+    /**
+     * Display a listing of the user's tasks.
+     * @return Response|ResponseFactory
+     */
+    public function myTasks(Request $request): Response|ResponseFactory
     {
-        $user = Auth::user();
-        $query = Task::query()->where('assigned_user_id', $user->id);
+        // Get the authenticated user
+        $user = $request->user();
 
-        $sortField = request('sort_field', 'created_at');
-        $sortOrder = request('sort_order', 'desc');
+        // Get the query parameters for sorting and filtering
+        $sortField = $request->input('sort_field', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
 
-        if (request('name')) {
-            $query->where('name', 'like', '%' . request('name') . '%');
-        }
+        // Use the query parameters in the Task model query
+        $tasks = Task::query()
+            ->where('assigned_to', $user->id)
+            ->when($request->input('name'), fn($query, $name) => $query->where('name', 'like', '%' . $name . '%'))
+            ->when($request->input('status'), fn($query, $status) => $query->where('status', $status))
+            ->orderBy($sortField, $sortOrder)
+            ->paginate(10)
+            ->onEachSide(1);
 
-        if (request('status')) {
-            $query->where('status', request('status'));
-        }
-
-        $tasks = $query->orderBy($sortField, $sortOrder)->paginate(10)->onEachSide(1);
+        // Return the Inertia response with the tasks data
         return inertia('Task/Index', [
             'tasks' => TaskResource::collection($tasks),
-            'queryParams' => request()->query() ?: null,
+            'queryParams' => $request->query() ?: null,
             'success' => session('success') ?? '',
         ]);
     }
