@@ -5,7 +5,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import {Head, Link, useForm} from "@inertiajs/react";
 
 export default function Create({auth, user}) {
-  const {data, setData, post, errors, reset} = useForm({
+  const {data, setData, post, errors} = useForm({
     name: user.name || "",
     email: user.email || "",
     password: "",

@@ -3,7 +3,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import {PROJECT_STATUSES_CLASS_MAP, PROJECT_STATUSES_TEXT_MAP} from "@/constants.jsx";
 import TasksTable from "@/Pages/Task/TasksTable.jsx";
 
-export default function Show({auth, project, tasks, queryParams}) {
+export default function Show({auth, project, tasks, queryParams, success}) {
   return (
     <AuthenticatedLayout
       user={auth.user}
@@ -13,6 +13,12 @@ export default function Show({auth, project, tasks, queryParams}) {
       <Head title={`Project "${project.name}"`}/>
       <div className="py-12">
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+          {
+            success &&
+            <div className={"bg-emerald-500 mb-4 py-2 px-4 text-white rounded"}>
+              {success}
+            </div>
+          }
           <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
             <div>
               <img src={project.image_path} alt={project.name} className={"w-full h-64 object-cover"}/>
