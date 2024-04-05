@@ -12,8 +12,15 @@ export default function Show({auth, task, tasks, queryParams}) {
   return (
     <AuthenticatedLayout
       user={auth.user}
-      header={<h2
-        className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{`Task "${task.name}"`}</h2>}
+      header={
+        <div className={"flex justify-between items-center"}>
+          <h2
+            className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{`Task "${task.name}"`}</h2>
+          <Link href={route('tasks.edit', task.id)}
+                className={"bg-amber-500 py-1 px-3 text-white rounded shadow transition-all hover:bg-amber-600"}
+          >Edit< /Link>
+        </div>
+      }
     >
       <Head title={`Task "${task.name}"`}/>
       <div className="py-12">
